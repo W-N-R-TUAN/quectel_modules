@@ -1,0 +1,69 @@
+/*******************************************************************************
+** @file:      	command_connection_aws_iot.txt
+** @author:    	W-N-R-TUAN
+** @time:      	7:15 PM Monday, August 1, 2023
+** Reference:	Quectel_LTE_Standard_MQTT_Application_Note_V1.2
+**				Quectel_EC200x_Series_AT_Commands_Manual_V1.0_Preliminary_20200424
+*******************************************************************************/
+
+==================================Information===========================================
+ATI						// Response Quectel EC200S
+==================================NETWORK_CHECK===========================================
+AT+CGACT=1,1			// Activated PDP context
+AT+CGPADDR=1			// Show PDP address
+AT+CGDCONT=1,"IP","v-internet"	//Define PDP context
+AT+CGDCONT?				// Check PDP context
+AT+QCFG="nwscanmode"	//Search Mode Network
+
+==================================CERTIFICATE_ADD=========================================
+AT+QMTCFG="SSL",0,1,2     	//enable SSL TCP for connection for MQTT
+AT+QFDEL="cacert.pem"		//delete CA certificate
+AT+QFDEL="client.pem"		//delete CC certificate
+AT+QFDEL="user_key.pem"		//delete CK certificate
+
+AT+QFUPL="cacert.pem"		//store CA certificate to RAM
+file "cacert.pem" content
+AT+QFUPL="client.pem"		//store CC certificate to RAM
+file "client.pem" content
+AT+QFUPL="user_key.pem"		//store CK certificate to RAM
+file "user_key.pem" content
+
+//Configure certificate.
+AT+QSSLCFG="cacert",2,"cacert.pem"
+AT+QSSLCFG="clientcert",2,"client.pem"
+AT+QSSLCFG="clientkey",2,"user_key.pem"
+//Configure SSL parameters.
+AT+QSSLCFG="seclevel",2,2			//SSL authentication mode: server authentication
+AT+QSSLCFG="sslversion",2,4			//SSL authentication version
+AT+QSSLCFG="ciphersuite",2,"0xFFFF"	//Cipher suite
+AT+QSSLCFG="ignorelocaltime",2,1	//Ignore the time of authentication.
+
+==================================CERTIFICATE_CHECK=========================================
+AT+QFLST
+AT+QFOPEN="cacert.pem"
+AT+QFREAD=1
+AT+QFCLOSE=1
+AT+QFOPEN="client.pem"
+AT+QFREAD=1
+AT+QFCLOSE=1
+AT+QFOPEN="user_key.pem"
+AT+QFLST
+
+==================================MQTT_SSL_connection=========================================
+//Start MQTT SSL connection
+AT+QMTOPEN=<client_idx>,"<host_name>",<port> 	// <port> 8883 for SSL/TLS
+
+//Connect to MQTT server
+AT+QMTCONN=<client_idx>,"<clientid>"			// deveice's <clientid> connect to MQTT sever	
+					
+// Subscribe to Topics
+AT+QMTSUB=<client_idx>,<msgid>,"<topic1>",<qos1>[,"<topic2>",<qos2>... 	
+
+//Publish messages
+AT+QMTPUBEX=<client_idx>,<msgid>,<qos>,<retain>,"<topic>",<msg_length>	
+>
+This is publish data from client
+
+//Disconnect a client from MQTT server.
+AT+QMTDISC=0
+
